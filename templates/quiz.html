@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>{{ quiz.name }}</h2>
+        <p class="lead">{{ quiz.description }}</p>
+        <div class="alert alert-info">
+            Время на выполнение: {{ quiz.minutes }} минут
+        </div>
+        
+        <form method="POST" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}">
+            {% for question in quiz.questions %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ question.question }}</h5>
+                </div>
+                <div class="card-body">
+                    {% for answer in question.answers %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" 
+                               name="question_{{ question.id }}" 
+                               id="answer_{{ answer.id }}" 
+                               value="{{ answer.id }}" required>
+                        <label class="form-check-label" for="answer_{{ answer.id }}">
+                            {{ answer.answer }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">Завершить квиз</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

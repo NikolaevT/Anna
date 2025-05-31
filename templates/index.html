@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Добро пожаловать в Квиз!</h1>
+        {% if current_user.is_authenticated %}
+            <p class="lead">Выберите квиз для прохождения</p>
+            {% if quizzes %}
+                <div class="row mt-4">
+                    {% for quiz in quizzes %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ quiz.name }}</h5>
+                                <p class="card-text">{{ quiz.description }}</p>
+                                <p class="card-text"><small class="text-muted">Время: {{ quiz.minutes }} минут</small></p>
+                                <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Начать</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    На данный момент нет доступных квизов.
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="lead">Войдите или зарегистрируйтесь, чтобы начать проходить квизы!</p>
+            <div class="mt-4">
+                <a href="{{ url_for('login') }}" class="btn btn-primary me-2">Войти</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Зарегистрироваться</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

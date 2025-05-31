@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Управление вопросами - {{ quiz.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Управление вопросами квиза "{{ quiz.name }}"</h2>
+    
+    <!-- Форма добавления вопроса -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Добавить новый вопрос</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group mb-3">
+                    {{ form.question.label(class="form-label") }}
+                    {{ form.question(class="form-control") }}
+                </div>
+                
+                <h5 class="mt-4">Варианты ответов:</h5>
+                {% for answer_form in form.answers %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                {{ answer_form.answer.label(class="form-label") }}
+                                {{ answer_form.answer(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-3">
+                                    {{ answer_form.is_correct(class="form-check-input") }}
+                                    {{ answer_form.is_correct.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="d-grid gap-2">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список существующих вопросов -->
+    <h4 class="mb-3">Существующие вопросы</h4>
+    {% if questions %}
+        {% for question in questions %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ question.question }}</h5>
+                <form method="POST" action="{{ url_for('delete_question', question_id=question.id) }}" 
+                      onsubmit="return confirm('Вы уверены, что хотите удалить этот вопрос?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for answer in question.answers %}
+                    <div class="list-group-item {% if answer.is_correct %}list-group-item-success{% endif %}">
+                        {{ answer.answer }}
+                        {% if answer.is_correct %}
+                        <span class="badge bg-success float-end">Правильный ответ</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            Пока нет добавленных вопросов.
+        </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Вернуться к списку квизов</a>
+    </div>
+</div>
+{% endblock %}
