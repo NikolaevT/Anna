@@ -15,7 +15,7 @@
                                 <h5 class="card-title">{{ quiz.name }}</h5>
                                 <p class="card-text">{{ quiz.description }}</p>
                                 <p class="card-text"><small class="text-muted">Время: {{ quiz.minutes }} минут</small></p>
-                                <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Начать</a>
+                                <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Начать</a>
                             </div>
                         </div>
                     </div>

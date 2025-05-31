@@ -1,19 +1,16 @@
-importfrom wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
-from wtforms.validators import DataRequired, Email, Length
-from wtforms.fields import FieldList, FormField
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hashfrom flask import Flask, render_template, redirect, url_for, flash, request
-from flask_bootstrap import Bootstrap
+from flask import Flask, render_template, redirect, url_for, flash, request
+from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, Length
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
-bootstrap = Bootstrap(app)
+bootstrap = Bootstrap5(app)
 
 # Конфигурация базы данных
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://timyrnikolaev:nbver1702@localhost:5432/quiz'
@@ -38,60 +35,60 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Зарегистрироваться')
 
-# Формы для работы с квизами
+class AnswerForm(FlaskForm):
+    answer = StringField('Вариант ответа', validators=[DataRequired()])
+    is_correct = BooleanField('Правильный ответ')
+
+class QuestionForm(FlaskForm):
+    question = StringField('Вопрос', validators=[DataRequired()])
+    answers = FieldList(FormField(AnswerForm), min_entries=4, max_entries=4)
+    submit = SubmitField('Добавить вопрос')
+
 class QuizForm(FlaskForm):
     name = StringField('Название', validators=[DataRequired(), Length(min=2, max=100)])
     description = StringField('Описание', validators=[DataRequired()])
     minutes = IntegerField('Время (в минутах)', validators=[DataRequired()])
     submit = SubmitField('Сохранить')
 
-class QuestionForm(FlaskForm):
-    question = StringField('Вопрос', validators=[DataRequired()])
-    answers = FieldList(FormField(AnswerForm), min_entries=4)
-    submit = SubmitField('Добавить вопрос')
-
-class AnswerForm(FlaskForm):
-    answer = StringField('Вариант ответа', validators=[DataRequired()])
-    is_correct = BooleanField('Правильный ответ')
-
 # Модели базы данных
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, nullable=False, unique=True)
-    email_verified_at = db.Column(db.DateTime)
-    password = db.Column(db.String, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    remember_token = db.Column(db.String)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    results = db.relationship('Result', backref='user', lazy=True)
+    quiz_attempts = db.relationship('QuizUser', backref='user', lazy=True)
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     minutes = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    questions = db.relationship('Question', backref='quiz', lazy=True)
+    questions = db.relationship('Question', backref='quiz', lazy=True, cascade='all, delete-orphan')
+    attempts = db.relationship('QuizUser', backref='quiz', lazy=True)
 
 class Question(db.Model):
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
-    question = db.Column(db.String, nullable=False)
+    question = db.Column(db.String(200), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    answers = db.relationship('Answer', backref='question', lazy=True)
+    answers = db.relationship('Answer', backref='question', lazy=True, cascade='all, delete-orphan')
 
 class Answer(db.Model):
     __tablename__ = 'answers'
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
-    answer = db.Column(db.String, nullable=False)
-    is_correct = db.Column(db.Boolean, nullable=False)
+    answer = db.Column(db.String(200), nullable=False)
+    is_correct = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -103,15 +100,14 @@ class Result(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
     answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class QuizUser(db.Model):
     __tablename__ = 'quiz_user'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -169,7 +165,7 @@ def admin():
 
 @app.route('/quiz/<int:quiz_id>')
 @login_required
-def quiz(quiz_id):
+def quiz_details(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     return render_template('quiz.html', quiz=quiz)
 
@@ -201,7 +197,7 @@ def edit_quiz(quiz_id):
         return redirect(url_for('index'))
     
     quiz = Quiz.query.get_or_404(quiz_id)
-    form = QuizForm()
+    form = QuizForm(obj=quiz)
     
     if form.validate_on_submit():
         quiz.name = form.name.data
@@ -210,11 +206,6 @@ def edit_quiz(quiz_id):
         db.session.commit()
         flash('Квиз успешно обновлен!', 'success')
         return redirect(url_for('admin'))
-    
-    elif request.method == 'GET':
-        form.name.data = quiz.name
-        form.description.data = quiz.description
-        form.minutes.data = quiz.minutes
     
     return render_template('quiz_form.html', form=form, title='Редактировать квиз')
 
@@ -244,7 +235,7 @@ def manage_questions(quiz_id):
     if form.validate_on_submit():
         question = Question(question=form.question.data, quiz_id=quiz_id)
         db.session.add(question)
-        db.session.flush()  # Чтобы получить id вопроса
+        db.session.flush()
 
         for answer_form in form.answers:
             answer = Answer(
@@ -270,19 +261,23 @@ def delete_question(question_id):
 
     question = Question.query.get_or_404(question_id)
     quiz_id = question.quiz_id
-    
-    # Удаляем связанные ответы
-    Answer.query.filter_by(question_id=question_id).delete()
-    
     db.session.delete(question)
     db.session.commit()
-    
     flash('Вопрос успешно удален!', 'success')
     return redirect(url_for('manage_questions', quiz_id=quiz_id))
 
-@app.route('/quiz/<int:quiz_id>/start', methods=['GET'])
+@app.route('/quiz/<int:quiz_id>/start')
 @login_required
 def start_quiz(quiz_id):
+    attempt = QuizUser.query.filter_by(
+        user_id=current_user.id,
+        quiz_id=quiz_id
+    ).first()
+    
+    if attempt:
+        flash('Вы уже проходили этот тест', 'warning')
+        return redirect(url_for('index'))
+    
     quiz = Quiz.query.get_or_404(quiz_id)
     return render_template('quiz.html', quiz=quiz)
 
@@ -292,27 +287,32 @@ def submit_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     score = 0
     total_questions = len(quiz.questions)
+    
+    if QuizUser.query.filter_by(user_id=current_user.id, quiz_id=quiz_id).first():
+        flash('Вы уже отправили результаты этого теста', 'danger')
+        return redirect(url_for('index'))
 
     for question in quiz.questions:
-        answer_id = request.form.get(f'question-{question.id}')
-        if answer_id:
-            answer = Answer.query.get(int(answer_id))
-            if answer and answer.is_correct:
-                score += 1
+        answer_id = request.form.get(f'question_{question.id}')
+        if not answer_id:
+            continue
             
-            # Сохраняем ответ пользователя
-            result = Result(
-                user_id=current_user.id,
-                quiz_id=quiz.id,
-                question_id=question.id,
-                answer_id=int(answer_id)
-            )
-            db.session.add(result)
+        answer = Answer.query.get(int(answer_id))
+        if answer and answer.is_correct:
+            score += 1
+        
+        result = Result(
+            user_id=current_user.id,
+            quiz_id=quiz.id,
+            question_id=question.id,
+            answer_id=int(answer_id)
+        )
+        db.session.add(result)
 
-    # Записываем что пользователь прошел квиз
     quiz_user = QuizUser(
         user_id=current_user.id,
-        quiz_id=quiz.id
+        quiz_id=quiz.id,
+        score=score
     )
     db.session.add(quiz_user)
     db.session.commit()
@@ -322,4 +322,16 @@ def submit_quiz(quiz_id):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(email='admin@example.com').first():
+            admin = User(
+                name='Admin',
+                email='admin@example.com',
+                password=generate_password_hash('adminpassword'),
+                is_admin=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print('Администратор создан успешно!')
     app.run(debug=True, host='0.0.0.0', port=8080)
