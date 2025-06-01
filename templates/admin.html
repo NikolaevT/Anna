@@ -8,27 +8,44 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Управление квизами</h5>
+                        <h5 class="card-title">
+                            <i class="fas fa-tasks"></i> Управление квизами
+                        </h5>
                         <p class="card-text">Создание и редактирование квизов</p>
-                        <a href="#" class="btn btn-primary">Управлять квизами</a>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('quiz_list') }}" class="btn btn-primary">
+                                <i class="fas fa-list"></i> Список квизов
+                            </a>
+                            <a href="{{ url_for('create_quiz') }}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Создать квиз
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Пользователи</h5>
+                        <h5 class="card-title">
+                            <i class="fas fa-users"></i> Пользователи
+                        </h5>
                         <p class="card-text">Управление пользователями</p>
-                        <a href="#" class="btn btn-primary">Управлять пользователями</a>
+                        <a href="{{ url_for('manage_users') }}" class="btn btn-primary">
+                            <i class="fas fa-user-cog"></i> Управлять пользователями
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Статистика</h5>
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar"></i> Статистика
+                        </h5>
                         <p class="card-text">Просмотр статистики квизов</p>
-                        <a href="#" class="btn btn-primary">Смотреть статистику</a>
+                        <a href="{{ url_for('statistics') }}" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Смотреть статистику
+                        </a>
                     </div>
                 </div>
             </div>

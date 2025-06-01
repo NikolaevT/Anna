@@ -12,10 +12,37 @@
                     <div class="col-md-4 mb-4">
                         <div class="card h-100">
                             <div class="card-body">
-                                <h5 class="card-title">{{ quiz.name }}</h5>
+                                <h5 class="card-title">
+                                    {{ quiz.name }}
+                                    {% if quiz.id in completed_quizzes %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% endif %}
+                                </h5>
                                 <p class="card-text">{{ quiz.description }}</p>
-                                <p class="card-text"><small class="text-muted">Время: {{ quiz.minutes }} минут</small></p>
-                                <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Начать</a>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> {{ quiz.minutes }} минут
+                                    </small>
+                                </p>
+                                
+                                {% if quiz.id in completed_quizzes %}
+                                    <div class="mb-3">
+                                        <p class="mb-1"><small>Ваш лучший результат:</small></p>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ completed_quizzes[quiz.id]['score'] }}%"
+                                                 aria-valuenow="{{ completed_quizzes[quiz.id]['score'] }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                                {{ completed_quizzes[quiz.id]['score'] }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" 
+                                       class="btn btn-outline-primary">Пройти снова</a>
+                                {% else %}
+                                    <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" 
+                                       class="btn btn-primary">Начать</a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -23,14 +50,18 @@
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    На данный момент нет доступных квизов.
+                    <i class="fas fa-info-circle"></i> На данный момент нет доступных квизов.
                 </div>
             {% endif %}
         {% else %}
             <p class="lead">Войдите или зарегистрируйтесь, чтобы начать проходить квизы!</p>
             <div class="mt-4">
-                <a href="{{ url_for('login') }}" class="btn btn-primary me-2">Войти</a>
-                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Зарегистрироваться</a>
+                <a href="{{ url_for('login') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </a>
             </div>
         {% endif %}
     </div>

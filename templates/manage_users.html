@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Управление пользователями{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4"><i class="fas fa-users"></i> Управление пользователями</h2>
+
+    {% if users %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Email</th>
+                        <th>Админ</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.is_admin %}
+                                <span class="badge bg-success">Да</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Нет</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {# Заглушки для действий #}
+                            <button class="btn btn-warning btn-sm" title="Изменить роль (сделать/убрать админа)" 
+                                    onclick="toggleAdminRole({{ user.id }})">
+                                <i class="fas fa-user-cog"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" title="Удалить пользователя" 
+                                    onclick="deleteUser({{ user.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Пользователи не найдены.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+'use strict';
+
+function toggleAdminRole(userId) {
+    if (confirm('Вы уверены, что хотите изменить роль этого пользователя?')) {
+        fetch(`/admin/user/${userId}/toggle_admin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                // Возможно, потребуется добавить CSRF токен, если он не обрабатывается автоматически
+                // 'X-CSRFToken': getCsrfToken() // Пример
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Обновляем страницу для отображения изменений
+            } else {
+                alert(data.message || 'Ошибка при изменении роли пользователя');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при изменении роли пользователя');
+        });
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.')) {
+        fetch(`/admin/user/${userId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+                 // Возможно, потребуется добавить CSRF токен
+                // 'X-CSRFToken': getCsrfToken() // Пример
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Обновляем страницу для отображения изменений
+            } else {
+                alert(data.message || 'Ошибка при удалении пользователя');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при удалении пользователя');
+        });
+    }
+}
+
+// Функция для получения CSRF токена (если нужна)
+// function getCsrfToken() {
+//     // Реализация зависит от того, как вы храните CSRF токен в HTML
+//     // Например, из скрытого поля в форме
+//     return document.querySelector('input[name=csrf_token]').value;
+// }
+</script>
+{% endblock %} 

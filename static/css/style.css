@@ -76,6 +76,73 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
+/* Стили для таймера и прогресса */
+.progress {
+    height: 20px;
+    margin-bottom: 1rem;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.progress-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+    background-color: #28a745;
+    transition: width .6s ease;
+    font-weight: 600;
+    text-shadow: 1px 1px 1px rgba(0,0,0,.2);
+}
+#timer {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    background-color: #ffc107;
+    border: 2px solid #e0a800;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Стили для завершенных квизов */
+.quiz-completed {
+    position: relative;
+}
+
+.quiz-completed .card-body {
+    position: relative;
+    background-color: #f8f9fa;
+}
+
+.quiz-completed .progress {
+    height: 12px;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.quiz-completed .progress-bar {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.quiz-status-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: #28a745;
+}
+
 /* Адаптивные стили */
 @media (max-width: 768px) {
     .form-container {
